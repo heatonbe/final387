@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+
+import sys
+
+import RPi.GPIO as GPIO
+
+import time
+
+import datetime
+
+import picamera
+from twython import Twython
+
+from auth import (
+	
+	consumer_key,
+	
+	consumer_secret,
+	
+	access_token,
+	
+	access_token_secret
+
+)
+
+
+
+sensor = 14
+
+def get_file_name():  # new
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%S.h264")
+
+cam = picamera.PiCamera()
+
+cam.capture('image.jpg')
+
+#photo = open('image.jpg','rb')
+
+
+
+#date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
+
+
+#str="[sent:"+date+"]"
+
+
+api = Twython(consumer_key,consumer_secret,access_token,access_token_secret)
+
+
+api.verify_credentials()
+
+api.get_home_timeline()
+
+
+api.update_status_with_media(media=photo, status=str)
+
+
+
+print("Successfully Tweeted: " + str)
+
+
+while True:
+    time.sleep(0.1)
+    previous_state = current_state
+    current_state = GPIO.input(sensor)
+    if current_state != previous_state:
+        new_state = "HIGH" if current_state else "LOW"
+        print("GPIO pin %s is %s" % (sensor, new_state))
+        if current_state:
+		fileName = get_file_name() 
+
+            	cam.start_recording(fileName)
+		cam.capture('image.jpg')
+		photo = open('image.jpg','rb')
+
+
+		date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
+		
+str="System has been activated.Recording. [sent:"+date+"]"
+
+
+		api.verify_credentials()
+
+		api.get_home_timeline()
+
+
+		api.update_status_with_media(media=photo, status=str)
+
+
+        else:
+            cam.stop_recording()
